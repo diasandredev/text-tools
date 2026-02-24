@@ -1,13 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 type Wrapper = "'" | '"' | '(' | 'none'
-type Delimiter = ',' | ';' | 'NEWLINE' | '|' | 'custom'
+type Delimiter = ',' | ';' | 'NEWLINE' | 'COMMA_NEWLINE' | '|' | 'custom'
 type CaseMode = 'none' | 'upper' | 'lower'
+
+const DEFAULT_WRAPPER: Wrapper = "'"
+const DEFAULT_DELIMITER: Delimiter = ','
+const DEFAULT_CASE: CaseMode = 'none'
+const DEFAULT_DEDUP = true
+const DEFAULT_TRIM = true
 
 function parseInput(text: string): string[] {
   const delimiterPattern = /[,;\n|]+/
   const parts = text.split(delimiterPattern)
-  
+
   return parts
     .map(part => {
       let trimmed = part.trim()
@@ -27,27 +33,32 @@ function transformValues(
   values: string[],
   wrapper: Wrapper,
   dedup: boolean,
-  caseMode: CaseMode
+  caseMode: CaseMode,
+  trim: boolean
 ): string[] {
   let result = [...values]
-  
+
+  if (trim) {
+    result = result.map(v => v.trim())
+  }
+
   if (caseMode === 'upper') {
     result = result.map(v => v.toUpperCase())
   } else if (caseMode === 'lower') {
     result = result.map(v => v.toLowerCase())
   }
-  
+
   if (dedup) {
     result = [...new Set(result)]
   }
-  
+
   if (wrapper !== 'none') {
     result = result.map(v => {
       if (wrapper === '(') return `(${v})`
       return `${wrapper}${v}${wrapper}`
     })
   }
-  
+
   return result
 }
 
@@ -56,268 +67,476 @@ function joinValues(
   delimiter: Delimiter,
   customDelimiter: string
 ): string {
-  let delim = delimiter === 'custom' ? customDelimiter : delimiter
-  if (delim === 'NEWLINE') delim = '\n'
+  if (delimiter === 'NEWLINE') return values.join('\n')
+  if (delimiter === 'COMMA_NEWLINE') return values.join(',\n')
+  const delim = delimiter === 'custom' ? customDelimiter : delimiter
   return values.join(delim)
+}
+
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '4px 0'
+      }}
+    >
+      <div style={{
+        width: '36px',
+        height: '20px',
+        borderRadius: '10px',
+        backgroundColor: checked ? '#238636' : '#30363d',
+        position: 'relative',
+        transition: 'background-color 0.2s ease'
+      }}>
+        <div style={{
+          width: '16px',
+          height: '16px',
+          borderRadius: '50%',
+          backgroundColor: '#fff',
+          position: 'absolute',
+          top: '2px',
+          left: checked ? '18px' : '2px',
+          transition: 'left 0.2s ease'
+        }} />
+      </div>
+      <span style={{ color: checked ? '#c9d1d9' : '#8b949e', fontSize: '13px' }}>
+        {label}
+      </span>
+    </button>
+  )
+}
+
+function Select({ value, onChange, options, label }: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  label?: string;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {label && <label style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</label>}
+      <div style={{ position: 'relative' }}>
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          style={{
+            appearance: 'none',
+            WebkitAppearance: 'none',
+            backgroundColor: '#21262d',
+            color: '#c9d1d9',
+            border: '1px solid #30363d',
+            borderRadius: '6px',
+            padding: '8px 32px 8px 12px',
+            fontSize: '13px',
+            outline: 'none',
+            cursor: 'pointer',
+            minWidth: '140px',
+            width: '100%'
+          }}
+        >
+          {options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {/* Custom chevron */}
+        <div style={{
+          position: 'absolute',
+          right: '10px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          pointerEvents: 'none',
+          color: '#8b949e',
+          lineHeight: 1,
+          fontSize: '10px'
+        }}>
+          ▾
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function App() {
   const [input, setInput] = useState('')
-  const [wrapper, setWrapper] = useState<Wrapper>("'")
-  const [delimiter, setDelimiter] = useState<Delimiter>(',')
+  const [wrapper, setWrapper] = useState<Wrapper>(DEFAULT_WRAPPER)
+  const [delimiter, setDelimiter] = useState<Delimiter>(DEFAULT_DELIMITER)
   const [customDelimiter, setCustomDelimiter] = useState('')
-  const [dedup, setDedup] = useState(true)
-  const [caseMode, setCaseMode] = useState<CaseMode>('none')
+  const [dedup, setDedup] = useState(DEFAULT_DEDUP)
+  const [trim, setTrim] = useState(DEFAULT_TRIM)
+  const [caseMode, setCaseMode] = useState<CaseMode>(DEFAULT_CASE)
   const [copied, setCopied] = useState(false)
+  const outputRef = useRef<HTMLPreElement>(null)
 
   const parsed = parseInput(input)
-  const transformed = transformValues(parsed, wrapper, dedup, caseMode)
+  const transformed = transformValues(parsed, wrapper, dedup, caseMode, trim)
   const output = joinValues(transformed, delimiter, customDelimiter)
 
   const handleCopy = () => {
+    if (!output) return
     navigator.clipboard.writeText(output)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleReset = () => {
+    setInput('')
+    setWrapper(DEFAULT_WRAPPER)
+    setDelimiter(DEFAULT_DELIMITER)
+    setCustomDelimiter('')
+    setDedup(DEFAULT_DEDUP)
+    setTrim(DEFAULT_TRIM)
+    setCaseMode(DEFAULT_CASE)
+    setCopied(false)
+  }
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && output) {
-        if (document.activeElement?.tagName !== 'TEXTAREA') {
-          e.preventDefault()
-          handleCopy()
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && output && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault()
+        if (output) {
+          navigator.clipboard.writeText(output)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
         }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [output, handleCopy])
+  }, [output])
+
+  const wrapperOptions = [
+    { value: "'", label: "Single ' '" },
+    { value: '"', label: 'Double " "' },
+    { value: '(', label: 'Parens ( )' },
+    { value: 'none', label: 'None' }
+  ]
+
+  const delimiterOptions = [
+    { value: ',', label: 'Comma ,' },
+    { value: ';', label: 'Semicolon ;' },
+    { value: 'NEWLINE', label: 'Newline ↵' },
+    { value: 'COMMA_NEWLINE', label: 'Comma + Newline' },
+    { value: '|', label: 'Pipe |' },
+    { value: 'custom', label: 'Custom...' }
+  ]
+
+  const caseOptions = [
+    { value: 'none', label: 'No change' },
+    { value: 'upper', label: 'UPPERCASE' },
+    { value: 'lower', label: 'lowercase' }
+  ]
+
+  const isDirty = input !== '' ||
+    wrapper !== DEFAULT_WRAPPER ||
+    delimiter !== DEFAULT_DELIMITER ||
+    dedup !== DEFAULT_DEDUP ||
+    trim !== DEFAULT_TRIM ||
+    caseMode !== DEFAULT_CASE
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <header style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '24px'
-      }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '20px', 
-          fontWeight: 600,
-          color: '#39d353'
-        }}>
-          Text-Tools
-        </h1>
-        <button
-          onClick={handleCopy}
-          disabled={!output}
-          style={{
-            backgroundColor: copied ? '#238636' : '#21262d',
-            color: output ? '#c9d1d9' : '#484f58',
-            border: '1px solid #30363d',
-            borderRadius: '6px',
-            padding: '8px 16px',
-            fontSize: '13px'
-          }}
-        >
-          {copied ? 'Copied!' : 'Copy to Clipboard'}
-        </button>
-      </header>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#0d1117',
+      padding: '32px 24px',
+      fontFamily: '"JetBrains Mono", "Fira Code", monospace'
+    }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
-        <div>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px', 
-            color: '#8b949e',
-            fontSize: '12px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Input
-          </label>
-          <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Paste your raw data here (UUIDs, IDs, strings)..."
-            style={{
-              width: '100%',
-              height: '280px',
-              backgroundColor: '#161b22',
-              border: '1px solid #30363d',
-              borderRadius: '6px',
-              color: '#c9d1d9',
-              padding: '12px',
-              resize: 'vertical',
-              outline: 'none'
-            }}
-            onFocus={e => e.target.style.borderColor = '#39d353'}
-            onBlur={e => e.target.style.borderColor = '#30363d'}
-          />
-        </div>
-
-        <div>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px', 
-            color: '#8b949e',
-            fontSize: '12px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Output Preview
-          </label>
-          <pre
-            style={{
-              width: '100%',
-              height: '280px',
-              backgroundColor: '#0d1117',
-              border: '1px solid #30363d',
-              borderRadius: '6px',
-              color: '#39d353',
-              padding: '12px',
-              margin: 0,
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all'
-            }}
-          >
-            {output || 'Output will appear here...'}
-          </pre>
-        </div>
-      </div>
-
-      <div style={{ 
-        backgroundColor: '#161b22', 
-        border: '1px solid #30363d', 
-        borderRadius: '6px',
-        padding: '16px'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          flexWrap: 'wrap',
-          gap: '24px',
-          alignItems: 'center'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ color: '#8b949e', fontSize: '13px' }}>Wrapper:</label>
-            <select
-              value={wrapper}
-              onChange={e => setWrapper(e.target.value as Wrapper)}
-              style={{
-                backgroundColor: '#21262d',
-                color: '#c9d1d9',
-                border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '6px 10px',
-                outline: 'none'
-              }}
-            >
-              <option value="'">Single quotes '</option>
-              <option value='"'>Double quotes "</option>
-              <option value="(">Parentheses ( )</option>
-              <option value="none">None</option>
-            </select>
+        {/* Header */}
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600, color: '#39d353', letterSpacing: '-0.5px' }}>
+              text-tools
+            </h1>
+            <p style={{ margin: '4px 0 0', color: '#8b949e', fontSize: '13px' }}>
+              Normalize, clean & format your data lists
+            </p>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ color: '#8b949e', fontSize: '13px' }}>Delimiter:</label>
-            <select
-              value={delimiter}
-              onChange={e => setDelimiter(e.target.value as Delimiter)}
-              style={{
-                backgroundColor: '#21262d',
-                color: '#c9d1d9',
-                border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '6px 10px',
-                outline: 'none'
-              }}
-            >
-              <option value=",">Comma ,</option>
-              <option value=";">Semicolon ;</option>
-              <option value="NEWLINE">Newline ↵</option>
-              <option value="|">Pipe |</option>
-              <option value="custom">Custom</option>
-            </select>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ color: '#484f58', fontSize: '11px' }}>⌘C to copy</span>
           </div>
+        </header>
 
-          {delimiter === 'custom' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ color: '#8b949e', fontSize: '13px' }}>Custom:</label>
-              <input
-                type="text"
-                value={customDelimiter}
-                onChange={e => setCustomDelimiter(e.target.value)}
-                placeholder="e.g., --sep"
-                style={{
-                  backgroundColor: '#21262d',
-                  color: '#c9d1d9',
-                  border: '1px solid #30363d',
-                  borderRadius: '4px',
-                  padding: '6px 10px',
-                  width: '100px',
-                  outline: 'none'
-                }}
-              />
+        {/* Main Content */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+
+          {/* Input */}
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <label style={{
+                color: '#8b949e',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Input
+              </label>
+              {input && (
+                <span style={{ color: '#484f58', fontSize: '11px' }}>
+                  {parsed.length} item{parsed.length !== 1 ? 's' : ''} detected
+                </span>
+              )}
             </div>
-          )}
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ color: '#8b949e', fontSize: '13px' }}>Case:</label>
-            <select
-              value={caseMode}
-              onChange={e => setCaseMode(e.target.value as CaseMode)}
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder={`Paste your data here:\n\nuuid1, uuid2, uuid3\n"value1"; "value2"\nitem1\nitem2`}
               style={{
-                backgroundColor: '#21262d',
-                color: '#c9d1d9',
+                width: '100%',
+                height: '320px',
+                backgroundColor: '#161b22',
                 border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '6px 10px',
-                outline: 'none'
+                borderRadius: '8px',
+                color: '#c9d1d9',
+                padding: '16px',
+                resize: 'vertical',
+                outline: 'none',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                boxSizing: 'border-box'
               }}
-            >
-              <option value="none">No change</option>
-              <option value="upper">UPPERCASE</option>
-              <option value="lower">lowercase</option>
-            </select>
+              onFocus={e => e.target.style.borderColor = '#39d353'}
+              onBlur={e => e.target.style.borderColor = '#30363d'}
+            />
           </div>
 
-          <label style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            cursor: 'pointer',
-            color: '#c9d1d9',
-            fontSize: '13px'
-          }}>
-            <input
-              type="checkbox"
-              checked={dedup}
-              onChange={e => setDedup(e.target.checked)}
-              style={{ accentColor: '#39d353' }}
-            />
-            Deduplicate
-          </label>
-        </div>
-      </div>
+          {/* Output */}
+          <div style={{ position: 'relative' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '10px',
+              color: '#8b949e',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Output Preview
+            </label>
+            <div style={{ position: 'relative' }}>
+              <pre
+                ref={outputRef}
+                onClick={() => output && handleCopy()}
+                style={{
+                  width: '100%',
+                  height: '320px',
+                  backgroundColor: input ? '#0d1117' : '#161b22',
+                  border: `1px solid ${input ? '#30363d' : '#21262d'}`,
+                  borderRadius: '8px',
+                  color: output ? '#39d353' : '#484f58',
+                  padding: '16px',
+                  margin: 0,
+                  overflow: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  cursor: output ? 'pointer' : 'default',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {output || 'Your formatted output will appear here...'}
+              </pre>
 
-      <div style={{ 
-        marginTop: '16px',
-        color: '#8b949e',
-        fontSize: '12px',
-        display: 'flex',
-        gap: '24px'
-      }}>
-        <span>Items: {parsed.length}</span>
-        <span>Unique: {new Set(parsed).size}</span>
-        <span>Output: {transformed.length} items</span>
+              {/* Copy Button Floating */}
+              {output && (
+                <button
+                  onClick={handleCopy}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    backgroundColor: copied ? '#238636' : '#21262d',
+                    color: copied ? '#fff' : '#c9d1d9',
+                    border: '1px solid #30363d',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    opacity: 0.9
+                  }}
+                >
+                  {copied ? '✓ Copied' : 'Copy'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Settings Panel */}
+        <div style={{
+          backgroundColor: '#161b22',
+          border: '1px solid #30363d',
+          borderRadius: '10px',
+          padding: '20px 24px'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'stretch',
+            gap: '0'
+          }}>
+
+            {/* Format Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '0 0 auto', minWidth: '160px' }}>
+              <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Format
+              </span>
+              <Select
+                label="Wrapper"
+                value={wrapper}
+                onChange={v => setWrapper(v as Wrapper)}
+                options={wrapperOptions}
+              />
+              <Select
+                label="Delimiter"
+                value={delimiter}
+                onChange={v => setDelimiter(v as Delimiter)}
+                options={delimiterOptions}
+              />
+              {delimiter === 'custom' && (
+                <input
+                  type="text"
+                  value={customDelimiter}
+                  onChange={e => setCustomDelimiter(e.target.value)}
+                  placeholder="Custom delimiter..."
+                  style={{
+                    backgroundColor: '#21262d',
+                    color: '#c9d1d9',
+                    border: '1px solid #30363d',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '13px',
+                    outline: 'none',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Separator */}
+            <div style={{ width: '1px', backgroundColor: '#30363d', margin: '0 24px', alignSelf: 'stretch' }} />
+
+            {/* Transform Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '0 0 auto', minWidth: '160px' }}>
+              <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Transform
+              </span>
+              <Select
+                label="Case"
+                value={caseMode}
+                onChange={v => setCaseMode(v as CaseMode)}
+                options={caseOptions}
+              />
+              <div style={{ paddingTop: '6px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Toggle
+                  label="Deduplicate"
+                  checked={dedup}
+                  onChange={setDedup}
+                />
+                <Toggle
+                  label="Trim spaces"
+                  checked={trim}
+                  onChange={setTrim}
+                />
+              </div>
+            </div>
+
+            {/* Separator */}
+            <div style={{ width: '1px', backgroundColor: '#30363d', margin: '0 24px', alignSelf: 'stretch' }} />
+
+            {/* Stats Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '1' }}>
+              <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Statistics
+              </span>
+              <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ color: '#c9d1d9', fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>{parsed.length}</div>
+                  <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items</div>
+                </div>
+                <div>
+                  <div style={{ color: '#c9d1d9', fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>{new Set(parsed).size}</div>
+                  <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Unique</div>
+                </div>
+                <div>
+                  <div style={{ color: transformed.length !== parsed.length ? '#f0883e' : '#c9d1d9', fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>
+                    {transformed.length}
+                  </div>
+                  <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Output</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '0 0 auto', minWidth: '140px' }}>
+              <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'right' }}>
+                Actions
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  onClick={handleCopy}
+                  disabled={!output}
+                  style={{
+                    backgroundColor: copied ? '#238636' : '#39d353',
+                    color: copied ? '#fff' : '#0d1117',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: output ? 'pointer' : 'not-allowed',
+                    opacity: output ? 1 : 0.5,
+                    transition: 'all 0.2s ease',
+                    width: '100%'
+                  }}
+                >
+                  {copied ? '✓ Copied!' : 'Copy Output'}
+                </button>
+                <button
+                  onClick={handleReset}
+                  disabled={!isDirty}
+                  title="Reset all settings and input"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: isDirty ? '#8b949e' : '#484f58',
+                    border: `1px solid ${isDirty ? '#30363d' : '#21262d'}`,
+                    borderRadius: '8px',
+                    padding: '9px 20px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: isDirty ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s ease',
+                    width: '100%'
+                  }}
+                  onMouseEnter={e => { if (isDirty) (e.target as HTMLButtonElement).style.borderColor = '#f0883e'; (e.target as HTMLButtonElement).style.color = isDirty ? '#f0883e' : '#484f58' }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.borderColor = isDirty ? '#30363d' : '#21262d'; (e.target as HTMLButtonElement).style.color = isDirty ? '#8b949e' : '#484f58' }}
+                >
+                  ↺ Reset
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Footer hint */}
+        <p style={{ textAlign: 'center', color: '#484f58', fontSize: '11px', marginTop: '24px' }}>
+          Tip: Press ⌘C (or Ctrl+C) anywhere to copy the output
+        </p>
+
       </div>
     </div>
   )
