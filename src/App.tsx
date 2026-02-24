@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import FileUpload from './components/FileUpload'
 
 type Wrapper = "'" | '"' | '(' | 'none'
 type Delimiter = ',' | ';' | 'NEWLINE' | 'COMMA_NEWLINE' | '|' | 'custom'
@@ -172,6 +173,7 @@ function App() {
   const [trim, setTrim] = useState(DEFAULT_TRIM)
   const [caseMode, setCaseMode] = useState<CaseMode>(DEFAULT_CASE)
   const [copied, setCopied] = useState(false)
+  const [loadedFile, setLoadedFile] = useState<{ name: string; size: number } | null>(null)
   const outputRef = useRef<HTMLPreElement>(null)
 
   const parsed = parseInput(input)
@@ -194,6 +196,23 @@ function App() {
     setTrim(DEFAULT_TRIM)
     setCaseMode(DEFAULT_CASE)
     setCopied(false)
+    setLoadedFile(null)
+  }
+
+  const handleFileContent = useCallback((content: string, fileName: string, fileSize: number) => {
+    setInput(content)
+    setLoadedFile(fileName ? { name: fileName, size: fileSize } : null)
+  }, [])
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const handleRemoveFile = () => {
+    setInput('')
+    setLoadedFile(null)
   }
 
   useEffect(() => {
@@ -268,7 +287,7 @@ function App() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
 
           {/* Input */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <label style={{
                 color: '#8b949e',
@@ -277,6 +296,11 @@ function App() {
                 letterSpacing: '0.5px'
               }}>
                 Input
+                {loadedFile && (
+                  <span style={{ color: '#39d353', marginLeft: '8px', textTransform: 'none', letterSpacing: 'normal' }}>
+                    — from file
+                  </span>
+                )}
               </label>
               {input && (
                 <span style={{ color: '#484f58', fontSize: '11px' }}>
@@ -284,31 +308,77 @@ function App() {
                 </span>
               )}
             </div>
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder={`Paste your data here:\n\nuuid1, uuid2, uuid3\n"value1"; "value2"\nitem1\nitem2`}
-              style={{
-                width: '100%',
-                height: '320px',
+
+            {loadedFile ? (
+              /* File loaded — compact indicator only */
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 backgroundColor: '#161b22',
-                border: '1px solid #30363d',
+                border: '1px solid #238636',
                 borderRadius: '8px',
-                color: '#c9d1d9',
-                padding: '16px',
-                resize: 'vertical',
-                outline: 'none',
-                fontSize: '13px',
-                lineHeight: '1.6',
-                boxSizing: 'border-box'
-              }}
-              onFocus={e => e.target.style.borderColor = '#39d353'}
-              onBlur={e => e.target.style.borderColor = '#30363d'}
-            />
+                padding: '14px 16px',
+                animation: 'fadeIn 0.2s ease'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '16px' }}>📄</span>
+                  <div>
+                    <div style={{ color: '#39d353', fontSize: '13px', fontWeight: 500 }}>{loadedFile.name}</div>
+                    <div style={{ color: '#484f58', fontSize: '11px', marginTop: '2px' }}>{formatSize(loadedFile.size)}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveFile}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #30363d',
+                    color: '#8b949e',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    lineHeight: 1
+                  }}
+                  title="Remove file"
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.borderColor = '#f85149'; (e.target as HTMLButtonElement).style.color = '#f85149' }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.borderColor = '#30363d'; (e.target as HTMLButtonElement).style.color = '#8b949e' }}
+                >
+                  ✕ Remove
+                </button>
+              </div>
+            ) : (
+              /* No file — drop zone + textarea */
+              <>
+                <FileUpload onFileContent={handleFileContent} hasFile={false} />
+                <textarea
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  placeholder={`Paste your data here:\n\nuuid1, uuid2, uuid3\n"value1"; "value2"\nitem1\nitem2`}
+                  style={{
+                    width: '100%',
+                    flex: 1,
+                    minHeight: '280px',
+                    backgroundColor: '#161b22',
+                    border: '1px solid #30363d',
+                    borderRadius: '8px',
+                    color: '#c9d1d9',
+                    padding: '16px',
+                    resize: 'vertical',
+                    outline: 'none',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#39d353'}
+                  onBlur={e => e.target.style.borderColor = '#30363d'}
+                />
+              </>
+            )}
           </div>
 
           {/* Output */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             <label style={{
               display: 'block',
               marginBottom: '10px',
@@ -319,13 +389,14 @@ function App() {
             }}>
               Output Preview
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
               <pre
                 ref={outputRef}
                 onClick={() => output && handleCopy()}
                 style={{
                   width: '100%',
-                  height: '320px',
+                  flex: 1,
+                  minHeight: '280px',
                   backgroundColor: input ? '#0d1117' : '#161b22',
                   border: `1px solid ${input ? '#30363d' : '#21262d'}`,
                   borderRadius: '8px',
