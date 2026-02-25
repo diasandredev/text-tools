@@ -278,9 +278,7 @@ function App() {
               Normalize, clean & format your data lists
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span style={{ color: '#484f58', fontSize: '11px' }}>⌘C to copy</span>
-          </div>
+
         </header>
 
         {/* Main Content */}
@@ -379,16 +377,23 @@ function App() {
 
           {/* Output */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '10px',
-              color: '#8b949e',
-              fontSize: '11px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>
-              Output Preview
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <label style={{
+                color: '#8b949e',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Output Preview
+              </label>
+              {input && (
+                <div style={{ display: 'flex', gap: '16px', color: '#8b949e', fontSize: '11px' }}>
+                  <span>Items: <strong style={{ color: '#c9d1d9', fontWeight: 600 }}>{parsed.length}</strong></span>
+                  <span>Unique: <strong style={{ color: '#c9d1d9', fontWeight: 600 }}>{new Set(parsed).size}</strong></span>
+                  <span>Output: <strong style={{ color: transformed.length !== parsed.length ? '#f0883e' : '#c9d1d9', fontWeight: 600 }}>{transformed.length}</strong></span>
+                </div>
+              )}
+            </div>
             <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
               <pre
                 ref={outputRef}
@@ -451,7 +456,7 @@ function App() {
           backgroundColor: '#161b22',
           border: '1px solid #30363d',
           borderRadius: '10px',
-          padding: '20px 24px'
+          padding: '24px 32px'
         }}>
           <div style={{
             display: 'flex',
@@ -460,7 +465,7 @@ function App() {
           }}>
 
             {/* Format Section */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '0 0 auto', minWidth: '160px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '1', minWidth: '160px' }}>
               <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Format
               </span>
@@ -501,7 +506,7 @@ function App() {
             <div style={{ width: '1px', backgroundColor: '#30363d', margin: '0 24px', alignSelf: 'stretch' }} />
 
             {/* Transform Section */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '0 0 auto', minWidth: '160px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '1', minWidth: '160px' }}>
               <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Transform
               </span>
@@ -528,34 +533,8 @@ function App() {
             {/* Separator */}
             <div style={{ width: '1px', backgroundColor: '#30363d', margin: '0 24px', alignSelf: 'stretch' }} />
 
-            {/* Stats Section */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '1' }}>
-              <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Statistics
-              </span>
-              <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ color: '#c9d1d9', fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>{parsed.length}</div>
-                  <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items</div>
-                </div>
-                <div>
-                  <div style={{ color: '#c9d1d9', fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>{new Set(parsed).size}</div>
-                  <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Unique</div>
-                </div>
-                <div>
-                  <div style={{ color: transformed.length !== parsed.length ? '#f0883e' : '#c9d1d9', fontSize: '24px', fontWeight: 700, lineHeight: 1 }}>
-                    {transformed.length}
-                  </div>
-                  <div style={{ color: '#8b949e', fontSize: '11px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Output</div>
-                </div>
-              </div>
-            </div>
-
             {/* Actions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '0 0 auto', minWidth: '140px' }}>
-              <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'right' }}>
-                Actions
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', flex: '1', minWidth: '140px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <button
                   onClick={handleCopy}
