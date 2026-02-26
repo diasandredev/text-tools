@@ -1,78 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import FileUpload from './components/FileUpload'
-
-type Wrapper = "'" | '"' | '(' | 'none'
-type Delimiter = ',' | ';' | 'NEWLINE' | 'COMMA_NEWLINE' | '|' | 'custom'
-type CaseMode = 'none' | 'upper' | 'lower'
-
-const DEFAULT_WRAPPER: Wrapper = "'"
-const DEFAULT_DELIMITER: Delimiter = ','
-const DEFAULT_CASE: CaseMode = 'none'
-const DEFAULT_DEDUP = true
-const DEFAULT_TRIM = true
-
-function parseInput(text: string): string[] {
-  const delimiterPattern = /[,;\n|]+/
-  const parts = text.split(delimiterPattern)
-
-  return parts
-    .map(part => {
-      let trimmed = part.trim()
-      if (
-        (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-        (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-        (trimmed.startsWith('(') && trimmed.endsWith(')'))
-      ) {
-        trimmed = trimmed.slice(1, -1)
-      }
-      return trimmed.trim()
-    })
-    .filter(part => part.length > 0)
-}
-
-function transformValues(
-  values: string[],
-  wrapper: Wrapper,
-  dedup: boolean,
-  caseMode: CaseMode,
-  trim: boolean
-): string[] {
-  let result = [...values]
-
-  if (trim) {
-    result = result.map(v => v.trim())
-  }
-
-  if (caseMode === 'upper') {
-    result = result.map(v => v.toUpperCase())
-  } else if (caseMode === 'lower') {
-    result = result.map(v => v.toLowerCase())
-  }
-
-  if (dedup) {
-    result = [...new Set(result)]
-  }
-
-  if (wrapper !== 'none') {
-    result = result.map(v => {
-      if (wrapper === '(') return `(${v})`
-      return `${wrapper}${v}${wrapper}`
-    })
-  }
-
-  return result
-}
-
-function joinValues(
-  values: string[],
-  delimiter: Delimiter,
-  customDelimiter: string
-): string {
-  if (delimiter === 'NEWLINE') return values.join('\n')
-  if (delimiter === 'COMMA_NEWLINE') return values.join(',\n')
-  const delim = delimiter === 'custom' ? customDelimiter : delimiter
-  return values.join(delim)
-}
+import {
+  type Wrapper,
+  type Delimiter,
+  type CaseMode,
+  DEFAULT_WRAPPER,
+  DEFAULT_DELIMITER,
+  DEFAULT_CASE,
+  DEFAULT_DEDUP,
+  DEFAULT_TRIM,
+  parseInput,
+  transformValues,
+  joinValues
+} from './core/text-engine'
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
@@ -174,7 +114,11 @@ function App() {
   const [caseMode, setCaseMode] = useState<CaseMode>(DEFAULT_CASE)
   const [copied, setCopied] = useState(false)
   const [loadedFile, setLoadedFile] = useState<{ name: string; size: number } | null>(null)
-  const outputRef = useRef<HTMLPreElement>(null)
+  const outputRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const inputGutterRef = useRef<HTMLDivElement>(null)
+  const outputGutterRef = useRef<HTMLDivElement>(null)
+  const outputScrollRef = useRef<HTMLPreElement>(null)
 
   const parsed = parseInput(input)
   const transformed = transformValues(parsed, wrapper, dedup, caseMode, trim)
@@ -282,10 +226,10 @@ function App() {
         </header>
 
         {/* Main Content */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px', alignItems: 'stretch' }}>
 
           {/* Input */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, maxHeight: '480px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <label style={{
                 color: '#8b949e',
@@ -349,34 +293,78 @@ function App() {
               /* No file — drop zone + textarea */
               <>
                 <FileUpload onFileContent={handleFileContent} hasFile={false} />
-                <textarea
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  placeholder={`Paste your data here:\n\nuuid1, uuid2, uuid3\n"value1"; "value2"\nitem1\nitem2`}
-                  style={{
-                    width: '100%',
-                    flex: 1,
-                    minHeight: '280px',
-                    backgroundColor: '#161b22',
-                    border: '1px solid #30363d',
-                    borderRadius: '8px',
-                    color: '#c9d1d9',
-                    padding: '16px',
-                    resize: 'vertical',
-                    outline: 'none',
-                    fontSize: '13px',
-                    lineHeight: '1.6',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={e => e.target.style.borderColor = '#39d353'}
-                  onBlur={e => e.target.style.borderColor = '#30363d'}
-                />
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  flex: 1,
+                  minHeight: 0,
+                  backgroundColor: '#161b22',
+                  border: '1px solid #30363d',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  transition: 'border-color 0.2s ease'
+                }}
+                  onFocus={e => (e.currentTarget as HTMLDivElement).style.borderColor = '#39d353'}
+                  onBlur={e => (e.currentTarget as HTMLDivElement).style.borderColor = '#30363d'}
+                >
+                  {/* Line number gutter */}
+                  <div
+                    ref={inputGutterRef}
+                    style={{
+                      width: '44px',
+                      minWidth: '44px',
+                      backgroundColor: '#0d1117',
+                      borderRight: '1px solid #21262d',
+                      padding: '16px 0',
+                      overflow: 'hidden',
+                      userSelect: 'none',
+                      flexShrink: 0
+                    }}
+                  >
+                    {(input || '').split('\n').map((_, i) => (
+                      <div key={i} style={{
+                        color: '#484f58',
+                        fontSize: '13px',
+                        lineHeight: '1.6',
+                        textAlign: 'right',
+                        paddingRight: '12px',
+                        fontFamily: 'inherit'
+                      }}>
+                        {i + 1}
+                      </div>
+                    ))}
+                  </div>
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onScroll={e => {
+                      if (inputGutterRef.current) {
+                        inputGutterRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop
+                      }
+                    }}
+                    placeholder={`Paste your data here:\n\nuuid1, uuid2, uuid3\n"value1"; "value2"\nitem1\nitem2`}
+                    style={{
+                      width: '100%',
+                      flex: 1,
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#c9d1d9',
+                      padding: '16px',
+                      resize: 'none',
+                      outline: 'none',
+                      fontSize: '13px',
+                      lineHeight: '1.6',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
               </>
             )}
           </div>
 
           {/* Output */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, maxHeight: '480px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <label style={{
                 color: '#8b949e',
@@ -394,32 +382,74 @@ function App() {
                 </div>
               )}
             </div>
-            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <pre
+            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <div
                 ref={outputRef}
                 onClick={() => output && handleCopy()}
                 style={{
-                  width: '100%',
                   flex: 1,
-                  minHeight: '280px',
+                  display: 'flex',
+                  minHeight: 0,
                   backgroundColor: input ? '#0d1117' : '#161b22',
                   border: `1px solid ${input ? '#30363d' : '#21262d'}`,
                   borderRadius: '8px',
-                  color: output ? '#39d353' : '#484f58',
-                  padding: '16px',
                   margin: 0,
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  fontSize: '13px',
-                  lineHeight: '1.6',
+                  overflow: 'hidden',
                   cursor: output ? 'pointer' : 'default',
                   transition: 'all 0.2s ease',
                   boxSizing: 'border-box'
                 }}
               >
-                {output || 'Your formatted output will appear here...'}
-              </pre>
+                {/* Line number gutter */}
+                <div
+                  ref={outputGutterRef}
+                  style={{
+                    width: '44px',
+                    minWidth: '44px',
+                    backgroundColor: '#0d1117',
+                    borderRight: '1px solid #21262d',
+                    padding: '16px 0',
+                    overflow: 'hidden',
+                    userSelect: 'none',
+                    flexShrink: 0
+                  }}
+                >
+                  {(output || 'placeholder').split('\n').map((_, i) => (
+                    <div key={i} style={{
+                      color: '#484f58',
+                      fontSize: '13px',
+                      lineHeight: '1.6',
+                      textAlign: 'right',
+                      paddingRight: '12px',
+                      fontFamily: 'inherit'
+                    }}>
+                      {i + 1}
+                    </div>
+                  ))}
+                </div>
+                <pre
+                  ref={outputScrollRef}
+                  onScroll={e => {
+                    if (outputGutterRef.current) {
+                      outputGutterRef.current.scrollTop = (e.target as HTMLElement).scrollTop
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    color: output ? '#39d353' : '#484f58',
+                    padding: '16px',
+                    margin: 0,
+                    overflow: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {output || 'Your formatted output will appear here...'}
+                </pre>
+              </div>
 
               {/* Copy Button Floating */}
               {output && (

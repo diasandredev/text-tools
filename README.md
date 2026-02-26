@@ -15,6 +15,47 @@ A fast, browser-based tool to **normalize, clean, and format data lists**. Built
 - **Keyboard shortcuts**: Quick copy to clipboard using `⌘C` (or `Ctrl+C`).
 - **Developer-friendly UI**: Sleek dark mode interface inspired by modern dev tools.
 
+## CLI
+
+You can also use `text-tools` directly from your terminal!
+
+### Usage
+
+```bash
+text-tools <file>
+# or via stdin
+cat file.txt | text-tools
+```
+
+### Options
+
+| Option | Description | Default |
+| ------ | ----------- | ------- |
+| `-w, --wrapper <type>` | Wrapper to apply (`single-quote`, `double-quote`, `parens`, `none`) | `single-quote` |
+| `-d, --delimiter <type>` | Delimiter between outputs (`comma`, `semicolon`, `newline`, `comma+newline`, `pipe`, or custom) | `comma` |
+| `-c, --case <mode>` | Case transformation (`upper`, `lower`, `none`) | `none` |
+| `--no-dedup` | Keep duplicate values (dedup is ON by default) | |
+| `--no-trim` | Keep leading/trailing spaces (trim is ON by default) | |
+
+### Examples
+
+```bash
+# Basic file processing
+text-tools data.txt
+
+# Custom delimiter and uppercase
+text-tools data.txt -d newline -w double-quote -c upper
+
+# Keep duplicates and spaces
+text-tools data.txt --no-dedup --no-trim
+
+# Read from stdin and output without wrappers
+cat data.txt | text-tools -d comma+newline -w none
+
+# Custom string delimiter output to file
+text-tools data.txt -d "| " -w parens > output.txt
+```
+
 ## Development
 
 First, run the development server:
