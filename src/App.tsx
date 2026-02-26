@@ -297,7 +297,7 @@ function App() {
                   position: 'relative',
                   display: 'flex',
                   flex: 1,
-                  minHeight: 0,
+                  minHeight: 400,
                   backgroundColor: '#161b22',
                   border: '1px solid #30363d',
                   borderRadius: '8px',
