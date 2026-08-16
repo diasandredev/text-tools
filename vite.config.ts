@@ -8,4 +8,16 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  build: {
+    target: 'es2022',
+    cssMinify: true,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom']
+        }
+      }
+    }
+  }
 })
