@@ -18,27 +18,18 @@ export default function Header({
 }: HeaderProps) {
     return (
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#21262d] mb-4">
-            <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#161b22] border border-[#30363d] flex items-center justify-center text-[#39d353] shadow-xs">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="4 7 4 4 20 4 20 7" />
-                        <line x1="9" y1="20" x2="15" y2="20" />
-                        <line x1="12" y1="4" x2="12" y2="20" />
-                    </svg>
+            <div>
+                <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-bold text-[#39d353] tracking-tight font-mono">
+                        text-tools
+                    </h1>
+                    <span className="px-1.5 py-0.2 text-[10px] font-semibold bg-[#161b22] text-[#8b949e] border border-[#30363d] rounded-md">
+                        v2.0
+                    </span>
                 </div>
-                <div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-lg font-bold text-white tracking-tight font-mono">
-                            text-tools
-                        </h1>
-                        <span className="px-1.5 py-0.2 text-[10px] font-semibold bg-[#161b22] text-[#8b949e] border border-[#30363d] rounded-md">
-                            v2.0
-                        </span>
-                    </div>
-                    <p className="text-xs text-[#8b949e] mt-0.5">
-                        Normalize, clean & format data lists fast
-                    </p>
-                </div>
+                <p className="text-xs text-[#8b949e] mt-0.5">
+                    Normalize, clean & format data lists fast
+                </p>
             </div>
 
             {/* Action Bar */}

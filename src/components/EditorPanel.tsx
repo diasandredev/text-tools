@@ -292,7 +292,7 @@ export default function EditorPanel({
                     <pre
                         ref={inputGutterRef}
                         aria-hidden="true"
-                        className="w-11 min-w-[44px] bg-[#0d1117] border-r border-[#21262d] py-3 m-0 select-none overflow-hidden text-right pr-2 text-[#484f58] font-mono text-xs leading-[1.6] pointer-events-none"
+                        className="w-11 min-w-[44px] bg-[#0d1117] border-r border-[#21262d] py-3 m-0 select-none overflow-hidden text-right pr-2 text-[#8b949e] font-mono text-xs leading-[1.6] pointer-events-none"
                     >
                         {inputLineGutter}
                     </pre>
@@ -308,7 +308,7 @@ export default function EditorPanel({
                         }}
                         placeholder={`Paste or drop your data here:\n\nusr_98a72b14\nusr_12c98d45, usr_44e12f88\n"another_item_1"; "another_item_2"`}
                         aria-label="Input raw data text area"
-                        className={`flex-1 p-3 bg-transparent text-[#c9d1d9] font-mono text-xs leading-[1.6] resize-none outline-none ${wordWrap ? 'whitespace-pre-wrap' : 'whitespace-pre overflow-x-auto'}`}
+                        className={`flex-1 p-3 bg-transparent text-[#c9d1d9] placeholder-[#8b949e] font-mono text-xs leading-[1.6] resize-none outline-none ${wordWrap ? 'whitespace-pre-wrap' : 'whitespace-pre overflow-x-auto'}`}
                     />
                 </div>
             </section>
@@ -378,7 +378,7 @@ export default function EditorPanel({
                                 ? 'bg-[#238636] text-white'
                                 : output
                                     ? 'bg-[#39d353] hover:bg-[#7ee787] text-[#0d1117] hover:scale-[1.02]'
-                                    : 'bg-[#21262d] text-[#484f58] cursor-not-allowed'
+                                    : 'bg-[#21262d] text-[#8b949e] cursor-not-allowed'
                                 }`}
                             title={`Copy formatted output (${MODIFIER_KEY}+C or ${MODIFIER_KEY}+Enter)`}
                             aria-label="Copy formatted output"
@@ -403,7 +403,7 @@ export default function EditorPanel({
                     <pre
                         ref={outputGutterRef}
                         aria-hidden="true"
-                        className="w-11 min-w-[44px] bg-[#0d1117] border-r border-[#21262d] py-3 m-0 select-none overflow-hidden text-right pr-2 text-[#484f58] font-mono text-xs leading-[1.6] pointer-events-none"
+                        className="w-11 min-w-[44px] bg-[#0d1117] border-r border-[#21262d] py-3 m-0 select-none overflow-hidden text-right pr-2 text-[#8b949e] font-mono text-xs leading-[1.6] pointer-events-none"
                     >
                         {outputLineGutter}
                     </pre>
@@ -416,7 +416,7 @@ export default function EditorPanel({
                             }
                         }}
                         aria-live="polite"
-                        className={`flex-1 p-3 m-0 font-mono text-xs leading-[1.6] outline-none select-text ${output ? 'text-[#39d353]' : 'text-[#484f58]'
+                        className={`flex-1 p-3 m-0 font-mono text-xs leading-[1.6] outline-none select-text ${output ? 'text-[#39d353]' : 'text-[#8b949e]'
                             } ${wordWrap ? 'whitespace-pre-wrap break-all overflow-y-auto' : 'whitespace-pre overflow-auto'}`}
                     >
                         {output || 'Formatted output will appear here instantly...'}

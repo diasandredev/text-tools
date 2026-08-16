@@ -92,10 +92,12 @@ export default function ControlToolbar({
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Wrapper */}
                     <div className="flex items-center gap-1.5">
-                        <span className="text-[#8b949e] uppercase text-[11px] font-semibold tracking-wider">
+                        <label htmlFor="select-wrapper" className="text-[#8b949e] uppercase text-[11px] font-semibold tracking-wider cursor-pointer">
                             Wrap:
-                        </span>
+                        </label>
                         <select
+                            id="select-wrapper"
+                            aria-label="Wrap item format"
                             value={config.wrapper}
                             onChange={e => update({ wrapper: e.target.value as Wrapper })}
                             className="px-2.5 py-1.5 bg-[#0d1117] border border-[#30363d] focus:border-[#58a6ff] hover:border-[#8b949e] rounded-lg text-xs text-[#c9d1d9] outline-none cursor-pointer min-w-[110px] transition-colors"
@@ -108,10 +110,12 @@ export default function ControlToolbar({
 
                     {/* Delimiter */}
                     <div className="flex items-center gap-1.5">
-                        <span className="text-[#8b949e] uppercase text-[11px] font-semibold tracking-wider">
+                        <label htmlFor="select-delimiter" className="text-[#8b949e] uppercase text-[11px] font-semibold tracking-wider cursor-pointer">
                             Delim:
-                        </span>
+                        </label>
                         <select
+                            id="select-delimiter"
+                            aria-label="Delimiter format"
                             value={config.delimiter}
                             onChange={e => update({ delimiter: e.target.value as Delimiter })}
                             className="px-2.5 py-1.5 bg-[#0d1117] border border-[#30363d] focus:border-[#58a6ff] hover:border-[#8b949e] rounded-lg text-xs text-[#c9d1d9] outline-none cursor-pointer min-w-[125px] transition-colors"
@@ -127,6 +131,7 @@ export default function ControlToolbar({
                         <label className="flex items-center gap-1.5 cursor-pointer text-[#c9d1d9] hover:text-white select-none text-xs">
                             <input
                                 type="checkbox"
+                                aria-label="Deduplicate items"
                                 checked={config.dedup}
                                 onChange={e => update({ dedup: e.target.checked })}
                                 className="w-3.5 h-3.5 rounded bg-[#0d1117] border-[#30363d] text-[#238636] cursor-pointer accent-[#238636]"
@@ -137,6 +142,7 @@ export default function ControlToolbar({
                         <label className="flex items-center gap-1.5 cursor-pointer text-[#c9d1d9] hover:text-white select-none text-xs">
                             <input
                                 type="checkbox"
+                                aria-label="Trim whitespace"
                                 checked={config.trim}
                                 onChange={e => update({ trim: e.target.checked })}
                                 className="w-3.5 h-3.5 rounded bg-[#0d1117] border-[#30363d] text-[#238636] cursor-pointer accent-[#238636]"
@@ -198,8 +204,10 @@ export default function ControlToolbar({
                 <div className="flex flex-wrap gap-4 pt-3 mt-3 border-t border-[#21262d] text-xs">
                     {config.wrapper === 'custom' && (
                         <div className="flex items-center gap-2">
-                            <span className="text-[#8b949e] font-medium">Custom Wrap:</span>
+                            <label htmlFor="custom-wrapper-prefix" className="text-[#8b949e] font-medium">Custom Wrap:</label>
                             <input
+                                id="custom-wrapper-prefix"
+                                aria-label="Custom wrapper prefix"
                                 type="text"
                                 placeholder="Prefix (e.g. ')"
                                 value={config.customWrapperPrefix || ''}
@@ -207,6 +215,8 @@ export default function ControlToolbar({
                                 className="w-24 px-2.5 py-1 bg-[#0d1117] border border-[#30363d] focus:border-[#58a6ff] rounded-md text-xs text-[#c9d1d9] outline-none transition-colors"
                             />
                             <input
+                                id="custom-wrapper-suffix"
+                                aria-label="Custom wrapper suffix"
                                 type="text"
                                 placeholder="Suffix (e.g. ')"
                                 value={config.customWrapperSuffix || ''}
@@ -218,8 +228,10 @@ export default function ControlToolbar({
 
                     {config.delimiter === 'custom' && (
                         <div className="flex items-center gap-2">
-                            <span className="text-[#8b949e] font-medium">Custom Delim:</span>
+                            <label htmlFor="custom-delimiter-input" className="text-[#8b949e] font-medium">Custom Delim:</label>
                             <input
+                                id="custom-delimiter-input"
+                                aria-label="Custom delimiter"
                                 type="text"
                                 placeholder="e.g. && or \t"
                                 value={config.customDelimiter || ''}
@@ -236,10 +248,12 @@ export default function ControlToolbar({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 mt-3 border-t border-[#21262d] text-xs animate-in fade-in slide-in-from-top-1 duration-150">
                     {/* Capitalization */}
                     <div>
-                        <label className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold">
+                        <label htmlFor="select-case" className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold cursor-pointer">
                             Case Conversion
                         </label>
                         <select
+                            id="select-case"
+                            aria-label="Case conversion mode"
                             value={config.caseMode}
                             onChange={e => update({ caseMode: e.target.value as CaseMode })}
                             className="w-full px-2.5 py-1.5 bg-[#0d1117] border border-[#30363d] focus:border-[#39d353] rounded-lg text-xs text-[#c9d1d9] outline-none cursor-pointer"
@@ -252,10 +266,12 @@ export default function ControlToolbar({
 
                     {/* Sorting */}
                     <div>
-                        <label className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold">
+                        <label htmlFor="select-sort" className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold cursor-pointer">
                             Sort Order
                         </label>
                         <select
+                            id="select-sort"
+                            aria-label="Sort order mode"
                             value={config.sortMode || 'none'}
                             onChange={e => update({ sortMode: e.target.value as SortMode })}
                             className="w-full px-2.5 py-1.5 bg-[#0d1117] border border-[#30363d] focus:border-[#39d353] rounded-lg text-xs text-[#c9d1d9] outline-none cursor-pointer"
@@ -268,10 +284,12 @@ export default function ControlToolbar({
 
                     {/* Global Enclosure */}
                     <div>
-                        <label className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold">
+                        <label htmlFor="select-enclosure" className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold cursor-pointer">
                             Global Enclosure
                         </label>
                         <select
+                            id="select-enclosure"
+                            aria-label="Global enclosure mode"
                             value={config.enclosure || 'none'}
                             onChange={e => update({ enclosure: e.target.value as EnclosureMode })}
                             className="w-full px-2.5 py-1.5 bg-[#0d1117] border border-[#30363d] focus:border-[#39d353] rounded-lg text-xs text-[#c9d1d9] outline-none cursor-pointer"
@@ -284,6 +302,8 @@ export default function ControlToolbar({
                         {config.enclosure === 'custom' && (
                             <div className="flex gap-2 mt-2">
                                 <input
+                                    id="custom-enclosure-start"
+                                    aria-label="Custom enclosure start"
                                     type="text"
                                     placeholder="Start (e.g. ()"
                                     value={config.customEnclosureStart || ''}
@@ -291,6 +311,8 @@ export default function ControlToolbar({
                                     className="w-1/2 px-2 py-1 bg-[#0d1117] border border-[#30363d] rounded-md text-xs text-[#c9d1d9] outline-none focus:border-[#39d353]"
                                 />
                                 <input
+                                    id="custom-enclosure-end"
+                                    aria-label="Custom enclosure end"
                                     type="text"
                                     placeholder="End (e.g. ))"
                                     value={config.customEnclosureEnd || ''}
@@ -303,11 +325,13 @@ export default function ControlToolbar({
 
                     {/* Regex Filter */}
                     <div>
-                        <label className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold">
+                        <label htmlFor="regex-filter-input" className="block text-[11px] uppercase tracking-wider text-[#8b949e] mb-1 font-semibold cursor-pointer">
                             Regex / Filter Pattern
                         </label>
                         <div className="flex gap-1.5">
                             <input
+                                id="regex-filter-input"
+                                aria-label="Regex filter pattern"
                                 type="text"
                                 placeholder="e.g. ^usr_ or @gmail"
                                 value={config.regexFilter || ''}
@@ -316,6 +340,8 @@ export default function ControlToolbar({
                             />
                             {config.regexFilter && (
                                 <select
+                                    id="regex-filter-mode"
+                                    aria-label="Regex filter mode include or exclude"
                                     value={config.regexFilterMode || 'include'}
                                     onChange={e => update({ regexFilterMode: e.target.value as 'include' | 'exclude' })}
                                     className="px-2 py-1 bg-[#0d1117] border border-[#30363d] rounded-lg text-[11px] text-[#c9d1d9] outline-none cursor-pointer"
