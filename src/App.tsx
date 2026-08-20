@@ -210,7 +210,7 @@ export default function App() {
 
         {/* Footer Hint */}
         <footer className="text-center text-xs text-[#8b949e] py-4 border-t border-[#21262d] flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Tip: Press <kbd className="px-1.5 py-0.5 bg-[#161b22] border border-[#30363d] rounded text-[#39d353]">{MODIFIER_KEY}+C</kbd> or <kbd className="px-1.5 py-0.5 bg-[#161b22] border border-[#30363d] rounded text-[#39d353]">{MODIFIER_KEY}+Enter</kbd> to copy • <kbd className="px-1.5 py-0.5 bg-[#161b22] border border-[#30363d] rounded text-[#39d353]">{MODIFIER_KEY}+K</kbd> for presets</span>
+          <span>Tip: Click output or press <kbd className="px-1.5 py-0.5 bg-[#161b22] border border-[#30363d] rounded text-[#39d353]">{MODIFIER_KEY}+C</kbd> / <kbd className="px-1.5 py-0.5 bg-[#161b22] border border-[#30363d] rounded text-[#39d353]">{MODIFIER_KEY}+Enter</kbd> to copy • <kbd className="px-1.5 py-0.5 bg-[#161b22] border border-[#30363d] rounded text-[#39d353]">{MODIFIER_KEY}+K</kbd> for presets</span>
           <span>text-tools • Processed 100% locally in your browser</span>
         </footer>
       </main>

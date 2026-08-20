@@ -397,8 +397,12 @@ export default function EditorPanel({
                     </div>
                 </div>
 
-                {/* Output View with Line Numbers */}
-                <div className="relative flex-1 flex overflow-hidden bg-[#0d1117]">
+                {/* Output View with Line Numbers & Click-to-Copy */}
+                <div
+                    onClick={output ? handleCopy : undefined}
+                    className={`relative flex-1 flex overflow-hidden bg-[#0d1117] group ${output ? 'cursor-pointer hover:bg-[#11161d] transition-colors' : ''}`}
+                    title={output ? `Click anywhere to copy all formatted output (${MODIFIER_KEY}+C)` : undefined}
+                >
                     {/* High-Performance 1-Node Gutter */}
                     <pre
                         ref={outputGutterRef}
@@ -416,11 +420,30 @@ export default function EditorPanel({
                             }
                         }}
                         aria-live="polite"
-                        className={`flex-1 p-3 m-0 font-mono text-xs leading-[1.6] outline-none select-text ${output ? 'text-[#39d353]' : 'text-[#8b949e]'
+                        className={`flex-1 p-3 m-0 font-mono text-xs leading-[1.6] outline-none select-none ${output ? 'text-[#39d353]' : 'text-[#8b949e]'
                             } ${wordWrap ? 'whitespace-pre-wrap break-all overflow-y-auto' : 'whitespace-pre overflow-auto'}`}
                     >
                         {output || 'Formatted output will appear here instantly...'}
                     </pre>
+
+                    {/* Floating Click-to-Copy Hint Badge */}
+                    {output && (
+                        <div
+                            className={`absolute bottom-2.5 right-3 pointer-events-none transition-all duration-150 text-[11px] px-2.5 py-1 rounded-md border flex items-center gap-1.5 shadow-md font-mono ${copied
+                                ? 'bg-[#238636] text-white border-[#2ea043] opacity-100 scale-100'
+                                : 'bg-[#161b22]/90 backdrop-blur-xs text-[#8b949e] border-[#30363d] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100'
+                                }`}
+                        >
+                            <svg className={`w-3 h-3 ${copied ? 'text-white' : 'text-[#39d353]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                {copied ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                )}
+                            </svg>
+                            <span>{copied ? 'Copied all!' : 'Click to copy all'}</span>
+                        </div>
+                    )}
                 </div>
             </section>
         </div>
